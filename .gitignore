@@ -3,11 +3,15 @@
 *.env
 credentials.json
 *.pem
+connect.env.sql
+
 # Workbench files you don't want
 *.mysql-workbench
+
 # OS
 .DS_Store
 Thumbs.db
+
 # Python / virtualenv
 venv/
 __pycache__/
