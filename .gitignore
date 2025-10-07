@@ -1,0 +1,13 @@
+# Secrets, environnements
+.env
+*.env
+credentials.json
+*.pem
+# Workbench files you don't want
+*.mysql-workbench
+# OS
+.DS_Store
+Thumbs.db
+# Python / virtualenv
+venv/
+__pycache__/
