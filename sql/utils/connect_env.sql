@@ -2,19 +2,19 @@
 -- NE JAMAIS committer vos vrais identifiants
 
 -- Nom d’hôte / host
-SET @host = 'VOTRE_HOST_ICI';
+SET @host = '51.178.25.157';
 
 -- Port MySQL (par défaut 3306)
-SET @port = 'VOTRE_PORT_ICI';
+SET @port = '23456';
 
 -- Nom d’utilisateur
-SET @user = 'VOTRE_USER_ICI';
+SET @user = 'toyscie';
 
 -- Mot de passe
-SET @password = 'VOTRE_PASSWORD_ICI';
+SET @password = 'WILD4Rdata!';
 
 -- Nom de la base de données
-SET @database = 'VOTRE_DB_ICI';
+SET @database = 'toys_and_models';
 
 -- Connexion depuis git bash
--- mysql -h -P -u -p
+-- mysql -h 51.178.25.157 -P 23456 -u toyscie -p'WILD4Rdata!' toys_and_models
