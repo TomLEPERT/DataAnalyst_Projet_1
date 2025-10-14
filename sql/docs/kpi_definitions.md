@@ -70,3 +70,24 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
+
+## KPI 10 — Client générant plus de revenus
+
+**Nom interne :** `KPI_Perfomance_clients_générant_plus_revenus`  
+**Fichier SQL :** `sql/kpis/kPI_Perfomance_clients_générant_plus_revenus.sql`  
+**Objectif métier :** 
+> Conaitre les clients qui génèrent plus des revenus dans le but de les fidéliser
+
+**Formule / logique de calcul :**
+```sql
+SELECT
+    c.customerName,
+    COUNT(p.paymentDate) AS 'nombre_Paiements',
+    SUM(p.amount) AS 'total_des_revenues',
+    AVG(p.amount) AS 'revenus_moyens_desclients'
+FROM customers c
+JOIN payments p ON c.customerNumber = p.customerNumber
+GROUP BY c.customerName
+ORDER BY total_des_revenues DESC;
+```
+
