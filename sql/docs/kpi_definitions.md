@@ -70,3 +70,43 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
+
+## KPI 13 — Ratio commandes/paiements par représentant commercial
+
+**Nom interne :** `kpi_Montant_moyen_des_paiements_et_clients_en_dessous_de_la_moyenne`  
+**Fichier SQL :** `sql/kpis/kpi_Montant_moyen_des_paiements_et_clients_en_dessous_de_la_moyenne.sql`  
+**Objectif métier :**
+Calcule le montant moyen d'une transaction.
+Identifie les clients dont le total payé sur la période est inferieure moyenne des totaux par client
+
+**Formule / logique de calcul :**
+```sql
+SELECT
+    ROUND(AVG(p.amount), 2) AS avg_payment_amount
+FROM payments p
+WHERE p.paymentDate BETWEEN :start_date AND :end_date;
+```
+```sql
+WITH totals_by_customer AS (
+    SELECT
+        p.customerNumber,
+        ROUND(SUM(p.amount), 2) AS total_paid
+    FROM payments p
+    WHERE p.paymentDate BETWEEN :start_date AND :end_date
+    GROUP BY p.customerNumber
+),
+avg_total AS (
+    SELECT ROUND(AVG(t.total_paid), 2) AS avg_total_per_customer
+    FROM totals_by_customer t
+)
+SELECT
+    t.customerNumber,
+    c.customerName,
+    t.total_paid,
+    a.avg_total_per_customer
+FROM totals_by_customer t
+JOIN avg_total a ON 1=1
+LEFT JOIN customers c ON c.customerNumber = t.customerNumber
+WHERE t.total_paid < a.avg_total_per_customer
+ORDER BY (a.avg_total_per_customer - t.total_paid) DESC;
+```
