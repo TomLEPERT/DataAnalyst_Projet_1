@@ -70,3 +70,77 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
+## KPI 5 — Produits les plus/moins vendus par catégorie
+
+**Nom interne :** `KPI_Produits_les_plus_moins_vendus_par_catégorie`  
+**Fichier SQL :** `sql/kpis/KPI_Produits_les_plus_moins_vendus_par_catégorie.sql`  
+**Objectif métier :**
+> Calculer le chiffre d’affaires généré par chaque employé chargé des ventes et le trie par ordre décroissant.
+
+**Formule / logique de calcul :**
+```sql
+SELECT
+    t.productLine AS categorie,
+    t.productName AS produit,
+    t.total_vendu
+FROM (
+    -- Sous-requête : total vendu par produit
+    SELECT
+        p.productLine,
+        p.productName,
+        SUM(od.quantityOrdered) AS total_vendu
+    FROM products p
+    JOIN orderdetails od ON p.productCode = od.productCode
+    GROUP BY p.productLine, p.productName
+) AS t
+JOIN (
+    -- Sous-requête : maximum vendu par catégorie
+    SELECT
+        productLine,
+        MAX(total_vendu) AS max_vendu
+    FROM (
+        SELECT
+            p.productLine,
+            SUM(od.quantityOrdered) AS total_vendu
+        FROM products p
+        JOIN orderdetails od ON p.productCode = od.productCode
+        GROUP BY p.productLine, p.productName
+    ) AS s
+    GROUP BY productLine
+) AS m
+ON t.productLine = m.productLine AND t.total_vendu = m.max_vendu
+ORDER BY t.productLine, t.total_vendu DESC;
+---
+-- Produits les moins vendus par catégorie
+SELECT
+    t.productLine AS categorie,
+    t.productName AS produit,
+    t.total_vendu
+FROM (
+    -- Sous-requête : total vendu par produit
+    SELECT
+        p.productLine,
+        p.productName,
+        SUM(od.quantityOrdered) AS total_vendu
+    FROM products p
+    JOIN orderdetails od ON p.productCode = od.productCode
+    GROUP BY p.productLine, p.productName
+) AS t
+JOIN (
+    **-- Sous-requête : minimum vendu par catégorie**
+
+    SELECT
+        productLine,
+        MIN(total_vendu) AS min_vendu
+    FROM (
+        SELECT
+            p.productLine,
+            SUM(od.quantityOrdered) AS total_vendu
+        FROM products p
+        JOIN orderdetails od ON p.productCode = od.productCode
+        GROUP BY p.productLine, p.productName
+    ) AS s
+    GROUP BY productLine
+) AS m
+ON t.productLine = m.productLine AND t.total_vendu = m.min_vendu
+ORDER BY t.productLine, t.total_vendu ASC;
