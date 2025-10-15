@@ -70,3 +70,19 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
+
+## KPI 8 — Ticket moyen
+
+**Nom interne :** `kpi_Ticket_moyen`  
+**Fichier SQL :** `sql/kpis/kpi_Ticket_moyen.sql`  
+**Objectif métier :**
+Calcule le panier moyen des commande sur une periode donnée.
+
+**Formule / logique de calcul :**
+```sql
+SELECT 
+    ROUND(SUM(od.quantityOrdered * od.priceEach) / COUNT(DISTINCT o.orderNumber), 2) AS average_order_value
+FROM orders o
+JOIN orderdetails od ON o.orderNumber = od.orderNumber
+WHERE o.orderDate BETWEEN :start_date AND :end_date;
+```
