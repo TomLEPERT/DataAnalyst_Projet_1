@@ -70,3 +70,29 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
+
+## KPI 9 — Taux de retour des clients
+
+**Nom interne :** `kpi_Taux_de_retour_des_clients`  
+**Fichier SQL :** `sql/kpis/kpi_Taux_de_retour_des_clients.sql`  
+**Objectif métier :**
+Calcule le pourcentage de client qui ont passer une deuxième commande dans une periode donnée.
+
+**Formule / logique de calcul :**
+```sql
+SELECT 
+    ROUND(
+        (COUNT(DISTINCT CASE WHEN nb_orders > 1 THEN customerNumber END) 
+         / COUNT(DISTINCT customerNumber)) * 100, 
+        2
+    ) AS repeat_customer_rate
+FROM (
+    SELECT 
+        c.customerNumber,
+        COUNT(o.orderNumber) AS nb_orders
+    FROM customers c
+    JOIN orders o ON c.customerNumber = o.customerNumber
+    WHERE o.orderDate BETWEEN :start_date AND :end_date
+    GROUP BY c.customerNumber
+) AS t;
+```
