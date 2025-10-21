@@ -206,6 +206,27 @@ FROM (
     GROUP BY c.customerNumber
 ) AS t;
 ```
+
+## KPI 10 — Client générant plus de revenus
+
+**Nom interne :** `KPI_Perfomance_clients_générant_plus_revenus`  
+**Fichier SQL :** `sql/kpis/kPI_Perfomance_clients_générant_plus_revenus.sql`  
+**Objectif métier :** 
+> Conaitre les clients qui génèrent plus des revenus dans le but de les fidéliser
+
+**Formule / logique de calcul :**
+```sql
+SELECT
+    c.customerName,
+    COUNT(p.paymentDate) AS 'nombre_Paiements',
+    SUM(p.amount) AS 'total_des_revenues',
+    AVG(p.amount) AS 'revenus_moyens_desclients'
+FROM customers c
+JOIN payments p ON c.customerNumber = p.customerNumber
+GROUP BY c.customerName
+ORDER BY total_des_revenues DESC;
+```
+
 ## KPI 12 — Croissance des ventes par trimestre
 
 **Nom interne :** `kpi_Croissance_des_ventes_par_trimestre`  
