@@ -70,3 +70,39 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
+
+## KPI 7 — kpi_Taux_evolution_mensuel_ventes_categorie
+
+**Nom interne :** `kpi_Taux_evolution_mensuel_ventes_categorie`  
+**Fichier SQL :** `sql/kpis/kpi_Taux_evolution_mensuel_ventes_categorie.sql`  
+**Objectif métier :**
+Mesure la variation mensuelle du chiffre d’affaires par ligne de produit. Elle fournit le taux d’évolution (en %) du revenu d’un mois à l’autre pour chaque catégorie de produit, afin de suivre la dynamique commerciale au niveau catégorie.
+
+**Formule / logique de calcul :**
+```sql
+WITH monthly AS (
+    SELECT
+        p.productLine,
+        DATE_FORMAT(o.orderDate, '%Y-%m') AS mois,
+        SUM(od.quantityOrdered * od.priceEach) AS monthly_revenue
+    FROM orders o
+    JOIN orderdetails od ON o.orderNumber = od.orderNumber
+    JOIN products p ON od.productCode = p.productCode
+    WHERE o.orderDate IS NOT NULL
+    GROUP BY p.productLine, DATE_FORMAT(o.orderDate, '%Y-%m')
+)
+SELECT
+    productLine,
+    mois,
+    monthly_revenue,
+    LAG(monthly_revenue) OVER (PARTITION BY productLine ORDER BY mois) AS prev_month_revenue,
+    ROUND(
+        CASE WHEN LAG(monthly_revenue) OVER (PARTITION BY productLine ORDER BY mois) IS NULL
+            OR LAG(monthly_revenue) OVER (PARTITION BY productLine ORDER BY mois) = 0
+        THEN NULL
+        ELSE (monthly_revenue - LAG(monthly_revenue) OVER (PARTITION BY productLine ORDER BY mois))
+            / LAG(monthly_revenue) OVER (PARTITION BY productLine ORDER BY mois) * 100
+        END, 2) AS pct_mom_change
+FROM monthly
+ORDER BY productLine, mois;
+```
