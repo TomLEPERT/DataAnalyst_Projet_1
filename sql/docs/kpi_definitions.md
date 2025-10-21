@@ -71,6 +71,65 @@ WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 ```
 
+## KPI 3 - Performance des bureaux
+
+**Nom Interne:** `kpi_performance_des_bureaux`
+**Fichier SQL :**`sql/kpis/kpi_performance_des_bureaux.sql`
+**Objectif métier :**
+> Mesurer le chiffre d'affaires généré par chaque bureau afin d'identifier les bureaux les plus performants sur le mois.
+
+ **Formule / logique de calcul :**
+ ```sql
+SELECT
+	o.officeCode,
+    o.city,
+    o.country,
+    SUM(od.quantityOrdered * od.priceEach) AS total_sales
+FROM offices o
+JOIN employees e ON o.officeCode = e.officeCode
+JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+JOIN orders ord ON c.customerNumber = ord.customerNumber
+JOIN orderdetails od ON ord.orderNumber = od.orderNumber
+GROUP BY o.officeCode, o.city, o.country
+ORDER BY total_sales DESC;
+```
+
+## KPI 4 Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel.sql
+
+**Nom interne:** `kpi_Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel`
+**Fichier sql:** `sql/kpis/kpi_Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel`
+**Objectif métier:**
+>  Suivre les revenus générés par région et par mois pour identifier les tendandances géographique
+Lorsqu'il n'y a pas de chiffres d'affaires générés sur le mois précédent le taux d'évolution mensuel sera nul. 
+
+**Formule / logique de calcul:**
+```sql
+WITH ca_mensuel AS (
+    SELECT
+        c.country AS region,
+        YEAR(o.orderDate) AS annee,
+        MONTH(o.orderDate) AS mois_num,
+        SUM(od.quantityOrdered * od.priceEach) AS chiffre_affaires
+    FROM orders o
+    JOIN orderdetails od ON o.orderNumber = od.orderNumber
+    JOIN customers c ON o.customerNumber = c.customerNumber
+    GROUP BY c.country, YEAR(o.orderDate), MONTH(o.orderDate)
+)
+SELECT
+    actuel.region,
+    CONCAT(actuel.annee, '-', LPAD(actuel.mois_num, 2, '0')) AS mois,  -- affichage format YYYY-MM
+    actuel.chiffre_affaires,
+    ROUND(
+        ((actuel.chiffre_affaires - avant.chiffre_affaires) / avant.chiffre_affaires) * 100,
+        2
+    ) AS taux_evolution
+FROM ca_mensuel AS actuel
+LEFT JOIN ca_mensuel AS avant
+    ON actuel.region = avant.region
+    AND (actuel.annee * 12 + actuel.mois_num - 1) = (avant.annee * 12 + avant.mois_num)
+ORDER BY actuel.region, actuel.annee, actuel.mois_num;
+```
+
 ## KPI 7 — kpi_Taux_evolution_mensuel_ventes_categorie
 
 **Nom interne :** `kpi_Taux_evolution_mensuel_ventes_categorie`  
