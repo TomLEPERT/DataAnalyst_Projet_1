@@ -1,3 +1,8 @@
+-- KPI: Moyenne des jours pour payer par client
+-- Description: Pour chaque client, calcul de la moyenne des jours entre orderDate
+--              et le 1er paiement dont paymentDate >= orderDate.
+-- Params: aucun.
+
 SELECT 
     SELECT 
     c.customerNumber,                   

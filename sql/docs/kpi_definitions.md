@@ -6,8 +6,8 @@ Ce document regroupe les définitions des indicateurs (KPI) calculés à partir 
 
 ## KPI 1 — Performance des représentant cormerciaux
 
-**Nom interne :** `kpi_performance_representant_comerciaux`  
-**Fichier SQL :** `sql/kpis/kpi_performance_representant_comerciaux.sql`  
+**Nom interne :** `kpi_Performance_representant_comerciaux`  
+**Fichier SQL :** `sql/kpis/kpi_Performance_representant_comerciaux.sql`  
 **Objectif métier :**
 > Calculer le chiffre d’affaires généré par chaque employé chargé des ventes et le trie par ordre décroissant.
 
@@ -94,7 +94,7 @@ GROUP BY o.officeCode, o.city, o.country
 ORDER BY total_sales DESC;
 ```
 
-## KPI 4 Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel.sql
+## KPI 4 - Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel.sql
 
 **Nom interne:** `kpi_Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel`
 **Fichier sql:** `sql/kpis/kpi_Chiffre_d_affaires_par_mois_et_par_region_taux_d_evolution_mensuel`
@@ -205,6 +205,7 @@ JOIN (
 ON t.productLine = m.productLine AND t.total_vendu = m.min_vendu
 ORDER BY t.productLine, t.total_vendu ASC;
 ```
+
 ## KPI 6 - marge_brute_par_produit_et_par_categorie
 
 **Nom interne:** 
@@ -316,6 +317,7 @@ FROM orders o
 JOIN orderdetails od ON o.orderNumber = od.orderNumber
 WHERE o.orderDate BETWEEN :start_date AND :end_date;
 ```
+
 ## KPI 9 — Taux de retour des clients
 
 **Nom interne :** `kpi_Taux_de_retour_des_clients`  
@@ -360,6 +362,39 @@ FROM customers c
 JOIN payments p ON c.customerNumber = p.customerNumber
 GROUP BY c.customerName
 ORDER BY total_des_revenues DESC;
+```
+
+## KPI 11 — Taux de recouvrement des créances par client
+
+**Nom interne :** `KPI_Taux_de_recouvrement_des_créances_par_client`  
+**Fichier SQL :** `sql/kpis/KPI_Taux_de_recouvrement_des_créances_par_client.sql`  
+**Objectif métier :** 
+> Identifier les clients ayant un solde restant dû pour prioriser le suivi et la relance.
+
+**Formule / logique de calcul :**
+```sql
+SELECT 
+    SELECT 
+    c.customerNumber,                   
+    c.customerName,                      
+    SUM(od.quantityOrdered * od.priceEach) AS total_commandes, 
+    p.total_paye AS total_paye,          
+    SUM(od.quantityOrdered * od.priceEach) - p.total_paye AS montant_non_paye 
+FROM customers c                        
+JOIN orders o 
+    ON c.customerNumber = o.customerNumber  
+JOIN orderdetails od 
+    ON o.orderNumber = od.orderNumber     
+LEFT JOIN (
+    SELECT 
+        customerNumber,               
+        SUM(amount) AS total_paye        
+    FROM payments
+    GROUP BY customerNumber               
+) p 
+    ON c.customerNumber = p.customerNumber  
+GROUP BY c.customerNumber, c.customerName, p.total_paye 
+ORDER BY montant_non_paye DESC; 
 ```
 
 ## KPI 12 — Croissance des ventes par trimestre
@@ -440,6 +475,44 @@ ORDER BY (a.avg_total_per_customer - t.total_paid) DESC;
 
 **Nom interne :** `kpi_Taux_de_paiement_par_delai`  
 **Fichier SQL :** `sql/kpis/kpi_Taux_de_paiement_par_delai.sql`  
+**Objectif métier :**
+Pour chaque client, calcul de la moyenne des jours entre orderDate et le 1er paiement >= orderDate
+
+**Formule / logique de calcul :**
+```sql
+WITH delays AS (
+    SELECT
+        o.orderNumber,
+        o.customerNumber,
+        o.orderDate,
+    (
+        SELECT MIN(p.paymentDate)
+        FROM payments p
+        WHERE p.customerNumber = o.customerNumber
+        AND p.paymentDate >= o.orderDate
+    ) AS first_payment_date,
+    DATEDIFF(
+        (SELECT MIN(p.paymentDate) FROM payments p WHERE p.customerNumber = o.customerNumber AND p.paymentDate >= o.orderDate),
+        o.orderDate
+    ) AS days_to_pay
+    FROM orders o
+)
+SELECT
+    d.customerNumber,
+    c.customerName,
+    COUNT(d.orderNumber) AS nb_orders_considered,
+    COUNT(CASE WHEN d.days_to_pay IS NOT NULL THEN 1 END) AS nb_orders_with_payment,
+    ROUND(AVG(d.days_to_pay), 2) AS avg_days_to_pay
+FROM delays d
+LEFT JOIN customers c ON c.customerNumber = d.customerNumber
+GROUP BY d.customerNumber, c.customerName
+ORDER BY avg_days_to_pay DESC;
+```
+
+## KPI 15 — Stock produit seuil critique
+
+**Nom interne :** `KPI_Stock_produit_seuil_critique`  
+**Fichier SQL :** `sql/kpis/KPI_Stock_produit_seuil_critique.sql`  
 **Objectif métier :**
 Pour chaque client, calcul de la moyenne des jours entre orderDate et le 1er paiement >= orderDate
 
