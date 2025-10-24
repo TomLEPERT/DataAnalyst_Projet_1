@@ -15,3 +15,4 @@ JOIN orderdetails od ON o.orderNumber = od.orderNumber
 WHERE e.jobTitle = 'Sales Rep'
 GROUP BY e.employeeNumber, e.firstName, e.lastName
 ORDER BY total_sales DESC;
+
