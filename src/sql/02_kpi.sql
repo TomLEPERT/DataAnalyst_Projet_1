@@ -6,22 +6,23 @@
 
 --------------------------------------------------------------
 --
--- KPI: Performance des représentants commerciaux
--- KPI: Ratio commandes/paiements par représentant commercial
--- KPI: Performance des bureaux
--- KPI: Chiffre d affaires par mois et par region taux d evolution mensuel
--- KPI: Produits les plus vendus par catégorie
--- KPI: marge_brute_par_produit_et_par_categorie
--- KPI: Taux evolution mensuel ventes categorie
--- KPI: Ticket moyen
--- KPI: Taux de retour des clients (Repeat Customer Rate)
--- KPI: Clients générant le plus/moins de revenus
--- KPI: Moyenne des jours pour payer par client
--- KPI: Croissance trimestrielle du chiffre d'affaires
--- KPI: Ratio commandes/paiements par représentant commercial
--- KPI: Moyenne des jours pour payer par client
--- KPI: Stock des produits sous seuil critique
--- KPI: Taux d'écoulement (approximation si pas de snapshot/purchases)
+-- KPI 1: Performance des représentants commerciaux
+-- KPI 2: Ratio commandes/paiements par représentant commercial
+-- KPI 3: Performance des bureaux
+-- KPI 4: Chiffre d affaires par mois et par region taux d evolution mensuel
+-- KPI 5: Produits les plus vendus par catégorie
+-- KPI 6: marge_brute_par_produit_et_par_categorie
+-- KPI 7: Taux evolution mensuel ventes categorie
+-- KPI 8: Ticket moyen
+-- KPI 9: Taux de retour des clients (Repeat Customer Rate)
+-- KPI 10: Clients générant le plus/moins de revenus
+-- KPI 11: Moyenne des jours pour payer par client
+-- KPI 12: Croissance trimestrielle du chiffre d'affaires
+-- KPI 13: Ratio commandes/paiements par représentant commercial
+-- KPI 14: Moyenne des jours pour payer par client
+-- KPI 15: Stock des produits sous seuil critique
+-- KPI 16: Durée moyenne de traitement des commandes + commandes au-dessus de la moyenne de livraison
+-- KPI 17: Taux d'écoulement (approximation si pas de snapshot/purchases)
 --
 -------------------------------------------------------------
 
@@ -34,7 +35,7 @@
 --
 --------------------------------------------------------------
 
--- KPI: Performance des représentants commerciaux
+-- KPI 1: Performance des représentants commerciaux
 -- Description: chiffre d’affaires généré par chaque représentant commercial
 -- Params: Aucun paramètre nécessaire, calcul sur toutes les ventes enregistrées
 -- Usage: exécuter directement pour obtenir le chiffre d’affaires total par Sales Rep
@@ -52,7 +53,7 @@ WHERE e.jobTitle = 'Sales Rep'
 GROUP BY e.employeeNumber, e.firstName, e.lastName
 ORDER BY total_sales DESC;
 
--- KPI: Ratio commandes/paiements par représentant commercial
+-- KPI 2: Ratio commandes/paiements par représentant commercial
 -- ----------------------------------------------------------
 -- Description:
 -- Ce KPI permet d’évaluer la performance de chaque représentant commercial
@@ -107,7 +108,7 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 
--- KPI 3 - Performance des bureaux
+-- KPI 3: Performance des bureaux
 -- Description chiffre d'affaires généré par chaque bureau
 -- Paramètre: aucun paramètre, calcul du chiffre d'affaires: SUM(od.quantityOrdered * od.priceEach)
 -- Usage: Mesurer le chiffre d'affaires généré par chaque bureau
@@ -126,7 +127,7 @@ GROUP BY o.officeCode, o.city, o.country
 ORDER BY chiffre_affaires DESC;
 
 
--- KPI: Chiffre d affaires par mois et par region taux d evolution mensuel
+-- KPI 4: Chiffre d affaires par mois et par region taux d evolution mensuel
 -- Description:
 --   Pour chaque région et chaque mois, calcule le chiffre d'affaires total
 --   et le taux d'évolution par rapport au mois précédent.
@@ -157,6 +158,7 @@ LEFT JOIN ca_mensuel AS avant
     AND (actuel.annee * 12 + actuel.mois_num - 1) = (avant.annee * 12 + avant.mois_num)
 ORDER BY actuel.region, actuel.annee, actuel.mois_num;
 
+-- KPI 5: Produits les plus/moins vendus par catégorie
 -- Produits les plus vendus par catégorie
 SELECT
     t.productLine AS categorie,
@@ -222,6 +224,8 @@ JOIN (
 ON t.productLine = m.productLine AND t.total_vendu = m.min_vendu
 ORDER BY t.productLine, t.total_vendu ASC;
 
+
+
 -- KPI 6: marge_brute_par_produit_et_par_categorie
 -- Description: dans un premier temps marge brute des produits par catégorie. dans un second temps, marge brute par produits et marge brute par catégorie.
 -- Params: Aucun paramètre nécessaire
@@ -272,7 +276,7 @@ JOIN orderdetails od ON p.productCode = od.productCode
 GROUP BY pl.productLine
 ORDER BY marge_brute DESC;
 
--- kpi Taux evolution mensuel ventes categorie
+-- KPI 7: Taux evolution mensuel ventes categorie
 -- Création d'une CTE (Common Table Expression) du nom de monthly
 -- Elle va contenir le chiffre d'affaire mensuel par catégorie
 WITH monthly AS (
@@ -319,7 +323,7 @@ SELECT
 FROM monthly
 ORDER BY productLine, mois;
 
--- KPI: Ticket moyen
+-- KPI 8: Ticket moyen
 -- ----------------------------------------------------------
 -- Description:
 -- Montant moyen des commandes sur la période sélectionné.
@@ -339,7 +343,7 @@ FROM orders o
 JOIN orderdetails od ON o.orderNumber = od.orderNumber
 WHERE o.orderDate BETWEEN :start_date AND :end_date;
 
--- KPI: Taux de retour des clients (Repeat Customer Rate)
+-- KPI 9: Taux de retour des clients (Repeat Customer Rate)
 -- Description: Pourcentage de clients ayant passé au moins deux commandes sur la période donnée
 -- Params: :start_date, :end_date (format 'YYYY-MM-DD')
 -- Usage: remplacer les parametres avant exécution ou utiliser un script qui les injecte.
@@ -360,7 +364,7 @@ FROM (
     GROUP BY c.customerNumber
 ) AS t;
 
---  KPI :Clients générant le plus/moins de revenus
+--  KPI 10:Clients générant le plus/moins de revenus
 --  Identifier les clients générant le plus de revenus pour mieux les fidéliser
 
 SELECT
@@ -373,7 +377,7 @@ JOIN payments p ON c.customerNumber = p.customerNumber
 GROUP BY c.customerName
 ORDER BY total_des_revenues DESC;
 
--- KPI: Moyenne des jours pour payer par client
+-- KPI 11: Moyenne des jours pour payer par client
 -- Description: Pour chaque client, calcul de la moyenne des jours entre orderDate
 --              et le 1er paiement dont paymentDate >= orderDate.
 -- Params: aucun.
@@ -401,7 +405,7 @@ LEFT JOIN (
 GROUP BY c.customerNumber, c.customerName, p.total_paye 
 ORDER BY montant_non_paye DESC;
 
--- KPI: Croissance trimestrielle du chiffre d'affaires
+-- KPI 12: Croissance trimestrielle du chiffre d'affaires
 -- Description:
 --   Pour chaque trimestre, calcule le chiffre d'affaires total et le taux de croissance
 --   par rapport au trimestre précédent.
@@ -433,7 +437,7 @@ LEFT JOIN quarterly_sales prev
     OR (curr.year = prev.year + 1 AND curr.quarter = 1 AND prev.quarter = 4)
 ORDER BY curr.year, curr.quarter;
 
--- KPI: Ratio commandes/paiements par représentant commercial
+-- KPI 13: Ratio commandes/paiements par représentant commercial
 -- ----------------------------------------------------------
 -- Description:
 -- Ce KPI permet d’évaluer la performance de chaque représentant commercial
@@ -488,7 +492,7 @@ LEFT JOIN (
 WHERE COALESCE(o_tot.total_orders, 0) > 0
 ORDER BY pct_payments_over_orders ASC;
 
--- KPI: Moyenne des jours pour payer par client
+-- KPI 14: Moyenne des jours pour payer par client
 -- Description: Pour chaque client, calcul de la moyenne des jours entre orderDate et le 1er paiement >= orderDate
 -- Params: aucun.
 
@@ -520,8 +524,8 @@ LEFT JOIN customers c ON c.customerNumber = d.customerNumber
 GROUP BY d.customerNumber, c.customerName
 ORDER BY avg_days_to_pay DESC;
 
--- Stock des produits sous seuil critique : 
---Identifier les produits dont le stock est faible pour éviter les ruptures.
+-- KPI 15: Stock des produits sous seuil critique : 
+-- Identifier les produits dont le stock est faible pour éviter les ruptures.
 -- J'ai regardé dans la table des produit pour vérifier les quantitiés de stock
 -- J'ai fais le trie par quantité en ordre croissant  et cela permet de voir les quantité moins élevée au plus élevée.
 -- Cela permettra d'anciper les cmmmandes afin d'éviter les ruptures. 
@@ -535,7 +539,21 @@ FROM
 WHERE quantityInStock
 ORDER BY quantityInStock ASC;
 
--- KPI: Taux d'écoulement (approximation si pas de snapshot/purchases)
+-- KPI 16: Durée moyenne de traitement des commandes + commandes au-dessus de la moyenne
+-- Description :- Mesurer l’efficacité opérationnelle en analysant le temps entre la date de commande et la date d’expédition.
+SELECT 
+    orderNumber,
+    orderDate,
+    shippedDate,
+    DATEDIFF(shippedDate, orderDate) AS duree_traitement,
+    (SELECT AVG(DATEDIFF(shippedDate, orderDate)) FROM orders) AS moyenne_globale
+FROM orders
+WHERE DATEDIFF(shippedDate, orderDate) > (
+    SELECT AVG(DATEDIFF(shippedDate, orderDate)) FROM orders
+)
+ORDER BY duree_traitement DESC;
+
+-- KPI 17: Taux d'écoulement (approximation si pas de snapshot/purchases)
 -- Params: :start_date, :end_date
 -- Usage :
 -- remplacer les parametres avant exécution ou utiliser un script qui les injecte.
