@@ -204,6 +204,7 @@ JOIN (
 ) AS m
 ON t.productLine = m.productLine AND t.total_vendu = m.min_vendu
 ORDER BY t.productLine, t.total_vendu ASC;
+```
 
 ## KPI 6 - marge_brute_par_produit_et_par_categorie
 
@@ -558,7 +559,7 @@ ORDER BY avg_days_to_pay DESC;
 ** filtre sur les commandes ayant uniquement une durée supérieur à la moyenne globale. 
 ** Triage pour afficher les durée de traitement de la plus grande à la plus petite
 
-
+```sql
 SELECT 
     orderNumber,
     orderDate,
