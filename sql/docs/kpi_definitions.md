@@ -204,7 +204,6 @@ JOIN (
 ) AS m
 ON t.productLine = m.productLine AND t.total_vendu = m.min_vendu
 ORDER BY t.productLine, t.total_vendu ASC;
-```
 
 ## KPI 6 - marge_brute_par_produit_et_par_categorie
 
@@ -545,6 +544,32 @@ FROM delays d
 LEFT JOIN customers c ON c.customerNumber = d.customerNumber
 GROUP BY d.customerNumber, c.customerName
 ORDER BY avg_days_to_pay DESC;
+```
+
+## KPI 16 Durée moyenne de traitement des commandes + commandes au-dessus de la moyenne de livraison
+
+**Nom interne :** `KPI_016`  
+**Fichier SQL :** `\sql\kpis\KPI_016.sql`  
+**Objectif métier :**
+** Objectif métier - Mesurer l’efficacité opérationnelle en analysant le temps entre la date de commande et la date d’expédition.
+**Requete : On affiche les colonnes suivantes : numéro de commande, date de commande et date d'expedition. 
+** calculer la différence entre la date de commande et la date d'expedition = durée de traiement. 
+** une sous requête qui permet de calculer la moyenne de la durée de traitement des commandes. 
+** filtre sur les commandes ayant uniquement une durée supérieur à la moyenne globale. 
+** Triage pour afficher les durée de traitement de la plus grande à la plus petite
+
+
+SELECT 
+    orderNumber,
+    orderDate,
+    shippedDate,
+    DATEDIFF(shippedDate, orderDate) AS duree_traitement,
+    (SELECT AVG(DATEDIFF(shippedDate, orderDate)) FROM orders) AS moyenne_globale
+FROM orders
+WHERE DATEDIFF(shippedDate, orderDate) > (
+    SELECT AVG(DATEDIFF(shippedDate, orderDate)) FROM orders
+)
+ORDER BY duree_traitement DESC;
 ```
 
 ## KPI 17 — Taux d'écoulement des stock
