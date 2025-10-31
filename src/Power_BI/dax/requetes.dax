@@ -1,5 +1,83 @@
-/*
-    Liste des commandes DAX
-*/
+Total Ventes = SUM(FACT_sales[totalAmount])
 
--- commande 1
+
+Total_payement = Sum(FACT_payments[amount])
+
+
+Total_commandes = SUM(FACT_sales[quantityOrdered])
+
+ClientsTotal = DISTINCTCOUNT(FACT_SALES[customerNumber])
+
+CA_par_vendeur = SUMX(FACT_sales,FACT_sales[quantityOrdered]*FACT_sales[priceEach])
+-- SUMX fonction itérative qui calcule chaque ligne et ensuite additionne
+
+
+PanierMoyen = DIVIDE([Total Ventes], [Total_commandes], 0)
+
+
+ClientsTotal = DISTINCTCOUNT(FACT_SALES[customerNumber])
+
+
+ClientsRecurrent = CALCULATE(DISTINCTCOUNT(FACT_SALES[customerNumber]),FILTER(VALUES(FACT_SALES[customerNumber]),CALCULATE(COUNTROWS(FACT_SALES)) > 1))
+—-FILTER pour filtrer dans la liste unique (VALUES(FACT_SALES(customerNumber)) combien de lignes COUNTROWS(FACT_SALES) qui représentent les commandes il a dans FACT_Sales et conserve uniquement les clients ayant plus d’une commande CALCULATE < 1
+
+
+TauxClientsRecurrent = DIVIDE([ClientsRecurrent], [ClientsTotal], 0)
+
+
+Top5produit =
+IF(RANKX(ALL(DIM_products[productName]), [Total Ventes], , DESC) <= 5,[Total Ventes],BLANK())
+—- classer les produits en fonction des ventes du plus grand au plus petit jusqu’au rang 5 inclus. 
+
+
+Flop5produits = IF(RANKX(ALL(DIM_products[productName]), [Total Ventes], , ASC) > 5,[Total Ventes],BLANK())
+—- classer les produits en fonction des ventes du plus petit au plus grand jusqu’au rang 5 inclus. 
+
+
+MargeBruteProduit = SUMX(FACT_Sales,FACT_Sales[quantityOrdered] * (FACT_Sales[priceEach] - RELATED(DIM_Products[buyPrice])))
+—- SUMX fonction itérative qui calcule chaque ligne et ensuite additionne
+et RELATED(DIM_Products[buyPrice] va chercher le prix d’achat correspondant dans la table DIM_PRODUCTS
+
+
+CA_mois_precedent = CALCULATE([Total Ventes],PREVIOUSMONTH(DIM_dates[order_date]))
+
+
+Taux_Evolution_Mensuel = DIVIDE([Total Ventes] - [CA_mois_precedent],[CA_mois_precedent],0)
+
+
+
+
+MoyennePaiement = AVERAGE(FACT_PAYMENTS[amount])
+
+
+DélaiMoyenPaiement = AVERAGEX(VALUES(FACT_SALES[orderNumber]),DATEDIFF(CALCULATE(MIN(FACT_SALES[orderDate])),CALCULATE(MIN(FACT_PAYMENTS[paymentDate])),DAY))
+—- Fait la moyenne de délai dans la liste unique de toutes les commandes et calcule la différence en jour (DAY) entre date de commande et de paiement
+
+
+commandesnonpayes = [Total Ventes]-[Total_payement]
+
+
+commandespayees = [Total Ventes]-[commandesnonpayes]
+
+
+TauxRecouvrement = DIVIDE([commandesnonpayes], [Total Ventes], 0)
+
+
+DuréeTraitementCommande = DATEDIFF(CALCULATE(MIN(FACT_SALES[orderDate])),CALCULATE(MIN(FACT_SALES[shippedDateTauxEcoulementStock = DIVIDE(SUM(FACT_SALES[quantityOrdered]),[StockMoyen])
+])),DAY)
+—- calcule la différence en jour (DAY) entre date de commande et d’expédition
+
+
+
+
+DuréeMoyenneTraitement = DIVIDE(SUMX(VALUES(FACT_SALES[orderNumber]),[DuréeTraitementCommande]),DISTINCTCOUNT(FACT_SALES[orderNumber]))
+—- Divise la somme totale des durées par le nombre de commandes.
+
+
+RetardLivraison = AVERAGEX(VALUES(FACT_SALES[orderNumber]), DATEDIFF(CALCULATE(MIN(FACT_SALES[requiredDate])),CALCULATE(MIN(FACT_SALES[shippedDate])),DAY))
+
+
+StockMoyen = AVERAGEX(VALUES(DIM_dates[order_date]),CALCULATE(SUM(DIM_products[quantityInStock])))
+
+
+TauxRecouvrement = DIVIDE([commandesnonpayes], [Total Ventes], 0)
